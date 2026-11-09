@@ -40,15 +40,59 @@ lanzar un Chrome **real** como proceso independiente y conectarse a él por CDP.
 
 ## Instalación
 
+El script es multiplataforma (macOS, Linux y Windows) y no necesita ningún paso de
+compilación: basta con Python y un navegador Chromium. El `venv` es específico de
+cada sistema operativo, así que **no** lo copies de un equipo a otro: créalo en cada
+máquina.
+
+### macOS / Linux
+
 ```bash
-git clone <URL_DEL_REPOSITORIO> downTorrent
+git clone https://github.com/ceciliofdz/downTorrent.git
 cd downTorrent
 
 python3 -m venv venv
-source venv/bin/activate          # Windows: venv\Scripts\activate
+source venv/bin/activate
 
 pip install -r requirements.txt
 ```
+
+### Windows
+
+1. Instala Python 3.9 o superior. La forma más rápida, en PowerShell:
+
+   ```powershell
+   winget install -e --id Python.Python.3.12
+   ```
+
+   O descárgalo de <https://www.python.org/downloads/windows/> y marca
+   **«Add python.exe to PATH»** durante la instalación.
+
+2. Descarga el proyecto (con Git, o bajando el ZIP desde GitHub y descomprimiéndolo):
+
+   ```bat
+   git clone https://github.com/ceciliofdz/downTorrent.git
+   cd downTorrent
+   ```
+
+3. Crea el entorno virtual e instala las dependencias, desde **cmd** (o desde
+   PowerShell usando `venv\Scripts\Activate.ps1`):
+
+   ```bat
+   py -m venv venv
+   venv\Scripts\activate
+   pip install -r requirements.txt
+   ```
+
+4. Comprueba que se detecta el navegador y ejecuta:
+
+   ```bat
+   python downtorrent.py --help
+   python downtorrent.py "https://ejemplo.com/serie/000000/Titulo-de-la-serie"
+   ```
+
+Si Python no está en el `PATH`, usa el lanzador `py` en lugar de `python`, y si el
+navegador no se detecta, pasa su ruta con `--executable` (ver más abajo).
 
 ## Uso
 
@@ -64,6 +108,9 @@ python downtorrent.py URL -o torrents --timeout 120
 
 # Forzar un navegador concreto
 python downtorrent.py URL --executable "/Applications/Chromium.app/Contents/MacOS/Chromium"
+
+# En Windows (cmd), con la ruta entre comillas si tiene espacios
+python downtorrent.py URL --executable "C:\Program Files\Google\Chrome\Application\chrome.exe"
 ```
 
 ### Opciones
@@ -100,8 +147,9 @@ cero se omiten, así que se puede relanzar el script sin volver a descargarlo to
 ## Privacidad
 
 El perfil de Chrome se guarda **fuera** del repositorio, en
-`~/.downtorrent/chrome-profile`, y contiene cookies de sesión. No lo copies al
-proyecto ni lo subas a ningún sitio.
+`~/.downtorrent/chrome-profile` (`C:\Users\<usuario>\.downtorrent\chrome-profile`
+en Windows), y contiene cookies de sesión. No lo copies al proyecto ni lo subas a
+ningún sitio.
 
 ## Problemas frecuentes
 
@@ -109,9 +157,23 @@ proyecto ni lo subas a ningún sitio.
 | --- | --- |
 | `El challenge de Cloudflare no se resolvió en Ns` | VPN o IP de datacenter, o `--headless`. Desactiva la VPN, prueba con ventana normal y sube `--timeout`. |
 | `No se encontró Chrome/Chromium` | Ninguna ruta conocida coincide: indica el binario con `--executable`. |
-| `Chrome no respondió en el puerto de depuración` | Quedó una instancia abierta con el mismo perfil; ciérrala (`pkill -f remote-debugging-port`) y reintenta. |
+| `Chrome no respondió en el puerto de depuración` | Quedó una instancia abierta con el mismo perfil; ciérrala y reintenta. En macOS/Linux: `pkill -f remote-debugging-port`; en Windows: cierra la ventana de Chrome que abrió el script, o usa el Administrador de tareas. |
 | `La respuesta parece HTML` | El challenge no estaba resuelto al descargar; reintenta subiendo `--timeout`. |
 | No aparecen enlaces | La página cambió de estructura o no era una página de listado. |
+| `UnicodeEncodeError` al imprimir | Solo ocurre en versiones antiguas; el script ya reconfigura la salida en UTF-8. Si persiste, ejecuta `set PYTHONIOENCODING=utf-8` antes (Windows). |
+| En Windows no arranca el navegador | Indica la ruta completa entre comillas: `--executable "C:\Program Files\Google\Chrome\Application\chrome.exe"`. |
+
+### Rutas de navegador habituales en Windows
+
+| Navegador | Ruta |
+| --- | --- |
+| Chrome (64 bits) | `C:\Program Files\Google\Chrome\Application\chrome.exe` |
+| Chrome (32 bits o usuario) | `C:\Program Files (x86)\Google\Chrome\Application\chrome.exe` · `%LOCALAPPDATA%\Google\Chrome\Application\chrome.exe` |
+| Edge | `C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe` |
+| Brave | `C:\Program Files\BraveSoftware\Brave-Browser\Application\brave.exe` |
+
+El script ya prueba estas rutas automáticamente; `--executable` solo es necesario si
+instalaste el navegador en una ubicación no habitual.
 
 ## Licencia
 

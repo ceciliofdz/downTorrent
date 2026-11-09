@@ -18,6 +18,7 @@ import os
 import shutil
 import socket
 import subprocess
+import sys
 import time
 import urllib.request
 from urllib.parse import urlparse
@@ -43,16 +44,31 @@ DOH_URL = "https://1.1.1.1/dns-query"
 # Marcas del título mientras Cloudflare está verificando (en varios idiomas).
 CHALLENGE_MARKERS = ("moment", "checking", "verificando", "espera", "attention")
 
-# Posibles rutas del binario de Chrome/Chromium.
+# Posibles rutas del binario de Chrome/Chromium (macOS, Linux y Windows).
+# En Windows las variables de entorno (%ProgramFiles%, etc.) se expanden al comprobar.
 RUTAS_NAVEGADOR = (
+    # macOS
     "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
     "/Applications/Chromium.app/Contents/MacOS/Chromium",
     "/Applications/Brave Browser.app/Contents/MacOS/Brave Browser",
     "/Applications/Microsoft Edge.app/Contents/MacOS/Microsoft Edge",
+    # Linux
     "/usr/bin/google-chrome",
+    "/usr/bin/google-chrome-stable",
     "/usr/bin/chromium",
     "/usr/bin/chromium-browser",
+    # Windows
+    r"%ProgramFiles%\Google\Chrome\Application\chrome.exe",
+    r"%ProgramFiles(x86)%\Google\Chrome\Application\chrome.exe",
+    r"%LocalAppData%\Google\Chrome\Application\chrome.exe",
+    r"%ProgramFiles%\Chromium\Application\chrome.exe",
+    r"%ProgramFiles%\BraveSoftware\Brave-Browser\Application\brave.exe",
+    r"%ProgramFiles(x86)%\Microsoft\Edge\Application\msedge.exe",
+    r"%ProgramFiles%\Microsoft\Edge\Application\msedge.exe",
 )
+
+# Caracteres no permitidos en nombres de archivo de Windows.
+CARACTERES_INVALIDOS_NOMBRE = '<>:"/\\|?*'
 
 
 def doh_resolve(host, timeout=10):
@@ -108,9 +124,11 @@ def _ruta_navegador(executable=None):
         raise FileNotFoundError(f"No existe el ejecutable indicado: {executable}")
 
     for ruta in RUTAS_NAVEGADOR:
+        ruta = os.path.expandvars(ruta)
         if os.path.exists(ruta):
             return ruta
-    for nombre in ("google-chrome", "chromium", "chromium-browser", "chrome"):
+    for nombre in ("google-chrome", "chromium", "chromium-browser",
+                   "chrome", "msedge", "brave"):
         ruta = shutil.which(nombre)
         if ruta:
             return ruta
@@ -142,6 +160,30 @@ def _lanzar_chrome(ruta, reglas, headless):
 
     proc = subprocess.Popen(args, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     return proc, puerto
+
+
+def _cerrar_chrome(proc):
+    """Cierra Chrome y sus procesos hijos (en Windows hace falta taskkill /T)."""
+    try:
+        if os.name == "nt" and proc.poll() is None:
+            subprocess.run(
+                ["taskkill", "/F", "/T", "/PID", str(proc.pid)],
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+                check=False,
+            )
+        else:
+            proc.terminate()
+    except Exception:
+        pass
+
+    try:
+        proc.wait(timeout=5)
+    except Exception:
+        try:
+            proc.kill()
+        except Exception:
+            pass
 
 
 def _esperar_puerto(puerto, timeout=20):
@@ -188,8 +230,16 @@ def _extraer_enlaces_torrent(page):
     return enlaces
 
 
+def _nombre_seguro(nombre):
+    """Sustituye los caracteres no válidos en nombres de archivo de Windows."""
+    limpio = "".join(
+        "_" if c in CARACTERES_INVALIDOS_NOMBRE else c for c in nombre
+    ).strip(" .")
+    return limpio
+
+
 def _descargar_torrent(page, url, carpeta_salida, idx, total):
-    nombre = os.path.basename(urlparse(url).path) or f"archivo_{idx}.torrent"
+    nombre = _nombre_seguro(os.path.basename(urlparse(url).path)) or f"archivo_{idx}.torrent"
     ruta = os.path.join(carpeta_salida, nombre)
 
     if os.path.exists(ruta) and os.path.getsize(ruta) > 0:
@@ -296,19 +346,22 @@ def descargar_torrents(urls, carpeta_salida=CARPETA_SALIDA, headless=False,
             finally:
                 browser.close()
     finally:
-        try:
-            proc.terminate()
-        except Exception:
-            pass
-        try:
-            proc.wait(timeout=5)
-        except Exception:
-            pass
+        _cerrar_chrome(proc)
 
     print("🎉 Proceso finalizado.")
 
 
+def _configurar_salida_unicode():
+    """Evita UnicodeEncodeError al imprimir emojis en consolas de Windows."""
+    for flujo in (sys.stdout, sys.stderr):
+        try:
+            flujo.reconfigure(encoding="utf-8", errors="replace")
+        except (AttributeError, ValueError):
+            pass
+
+
 def main():
+    _configurar_salida_unicode()
     parser = argparse.ArgumentParser(
         description="Descarga los archivos .torrent enlazados en una o varias páginas web.",
         epilog=f"Ejemplo: %(prog)s '{URL_EJEMPLO}' -o {CARPETA_SALIDA}",
