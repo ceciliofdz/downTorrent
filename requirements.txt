@@ -1,0 +1,4 @@
+# Dependencias del script (versiones probadas).
+# Nota: no hace falta `playwright install`; se usa el Chrome/Chromium del sistema.
+curl_cffi~=0.16.3
+playwright~=1.64.1

@@ -1,0 +1,38 @@
+# Entornos virtuales
+venv/
+.venv/
+env/
+ENV/
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Salida del script: los .torrent descargados no se versionan
+*.torrent
+torrents_diplomatica/
+the_ark_3/
+
+# Perfil de Chrome con cookies de sesión (cf_clearance). Nunca subir.
+.downtorrent/
+
+# Estado de herramientas / agentes locales
+.codewhale/
+
+# macOS
+.DS_Store
+._*
+
+# Editores
+.vscode/
+.idea/
+*.swp
+
+# Logs
+*.log
