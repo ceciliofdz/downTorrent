@@ -30,7 +30,8 @@ from playwright.sync_api import sync_playwright
 # ---------------------------------------------------------------
 # Configuración
 # ---------------------------------------------------------------
-URL_EJEMPLO = "https://www47.mejortorrent.eu/serie/131304/131304/La-diplomtica-4-Temporada-720p"
+# URL de ejemplo que aparece en la ayuda. Sustitúyela por la página real del listado.
+URL_EJEMPLO = "https://ejemplo.com/serie/000000/Titulo-de-la-serie-720p"
 CARPETA_SALIDA = "torrents_diplomatica"
 
 # Perfil persistente de Chrome: conserva cookies (cf_clearance) entre ejecuciones,

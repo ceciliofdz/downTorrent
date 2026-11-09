@@ -54,16 +54,16 @@ pip install -r requirements.txt
 
 ```bash
 # Una página
-python downdTorrent.py "https://ejemplo.com/serie/000000/000000/Titulo-de-la-serie"
+python downtorrent.py "https://ejemplo.com/serie/000000/000000/Titulo-de-la-serie"
 
 # Varias páginas a la vez
-python downdTorrent.py URL1 URL2 URL3
+python downtorrent.py URL1 URL2 URL3
 
 # Carpeta de destino distinta y más tiempo para el challenge
-python downdTorrent.py URL -o torrents --timeout 120
+python downtorrent.py URL -o torrents --timeout 120
 
 # Forzar un navegador concreto
-python downdTorrent.py URL --executable "/Applications/Chromium.app/Contents/MacOS/Chromium"
+python downtorrent.py URL --executable "/Applications/Chromium.app/Contents/MacOS/Chromium"
 ```
 
 ### Opciones
@@ -91,7 +91,7 @@ volver a descargarlo todo.
 
 ```
 .
-├── downdTorrent.py     # script principal
+├── downtorrent.py      # script principal
 ├── requirements.txt    # dependencias
 ├── README.md
 ├── LICENSE
