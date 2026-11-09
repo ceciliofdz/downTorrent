@@ -71,7 +71,7 @@ python downtorrent.py URL --executable "/Applications/Chromium.app/Contents/MacO
 | Opción | Descripción | Por defecto |
 | --- | --- | --- |
 | `urls` | Una o varias URLs de páginas de las que extraer los `.torrent`. | — |
-| `-o`, `--salida` | Carpeta donde se guardan los archivos descargados. | `torrents_diplomatica` |
+| `-o`, `--salida` | Carpeta donde se guardan los archivos descargados. | `torrents` |
 | `--headless` | Ejecuta Chrome sin ventana. Menos fiable contra Cloudflare. | desactivado |
 | `--executable` | Ruta al binario de Chrome/Chromium si no se detecta automáticamente. | autodetección |
 | `--timeout` | Segundos máximos esperando a que se resuelva el challenge. | `60` |
@@ -82,10 +82,9 @@ navegador no aparece ahí, usa `--executable`.
 
 ## Salida
 
-Los `.torrent` se guardan en la carpeta indicada (por defecto
-`torrents_diplomatica/`), conservando el nombre de archivo del enlace. Los que ya
-existen con tamaño mayor que cero se omiten, así que se puede relanzar el script sin
-volver a descargarlo todo.
+Los `.torrent` se guardan en la carpeta indicada (por defecto `torrents/`),
+conservando el nombre de archivo del enlace. Los que ya existen con tamaño mayor que
+cero se omiten, así que se puede relanzar el script sin volver a descargarlo todo.
 
 ## Estructura del proyecto
 

@@ -16,8 +16,7 @@ dist/
 
 # Salida del script: los .torrent descargados no se versionan
 *.torrent
-torrents_diplomatica/
-the_ark_3/
+torrents/
 
 # Perfil de Chrome con cookies de sesión (cf_clearance). Nunca subir.
 .downtorrent/

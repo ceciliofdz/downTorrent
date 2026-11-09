@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Descargador de archivos .torrent de MejorTorrent.
+Descargador de archivos .torrent desde páginas de listado de un catálogo web.
 
 Cloudflare sirve un "managed challenge" que no pasa con curl_cffi ni con un
 Chrome lanzado por Playwright (lo detecta por el CDP de automatización). La
@@ -32,7 +32,7 @@ from playwright.sync_api import sync_playwright
 # ---------------------------------------------------------------
 # URL de ejemplo que aparece en la ayuda. Sustitúyela por la página real del listado.
 URL_EJEMPLO = "https://ejemplo.com/serie/000000/Titulo-de-la-serie-720p"
-CARPETA_SALIDA = "torrents_diplomatica"
+CARPETA_SALIDA = "torrents"
 
 # Perfil persistente de Chrome: conserva cookies (cf_clearance) entre ejecuciones,
 # de modo que el navegador parece un visitante habitual y Cloudflare desafía menos.
@@ -310,7 +310,7 @@ def descargar_torrents(urls, carpeta_salida=CARPETA_SALIDA, headless=False,
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Descarga los archivos .torrent de una o varias páginas de MejorTorrent.",
+        description="Descarga los archivos .torrent enlazados en una o varias páginas web.",
         epilog=f"Ejemplo: %(prog)s '{URL_EJEMPLO}' -o {CARPETA_SALIDA}",
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
