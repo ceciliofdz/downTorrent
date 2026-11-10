@@ -4,6 +4,12 @@ venv/
 env/
 ENV/
 
+# Runtime portable local (Python copiado para evitar el Python de Store)
+python313/
+
+# Carpeta temporal de Chrome/Playwright
+.temp/
+
 # Python
 __pycache__/
 *.py[cod]

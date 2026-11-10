@@ -1,4 +1,7 @@
 # Dependencias del script (versiones probadas).
 # Nota: no hace falta `playwright install`; se usa el Chrome/Chromium del sistema.
-curl_cffi~=0.16.3
+# Usa un Python estándar (python.org), no el de Microsoft Store: el de Store se
+# ejecuta a integridad baja y Chrome no puede arrancar desde él.
+# La interfaz gráfica usa tkinter, incluido en Python. En Linux puede requerir
+# el paquete del sistema python3-tk.
 playwright~=1.64.1

@@ -1,7 +1,8 @@
 # downTorrent
 
-Script de línea de comandos que descarga los archivos `.torrent` enlazados en una o
-varias páginas de un catálogo web, sorteando el *managed challenge* de Cloudflare.
+Script de línea de comandos —y aplicación de escritorio— que descarga los archivos
+`.torrent` enlazados en una o varias páginas de un catálogo web, sorteando el
+*managed challenge* de Cloudflare.
 
 > **Aviso legal.** Esta herramienta solo descarga archivos de metadatos `.torrent`
 > desde páginas públicas y no aloja, distribuye ni enlaza contenido protegido.
@@ -11,7 +12,7 @@ varias páginas de un catálogo web, sorteando el *managed challenge* de Cloudfl
 
 ## ¿Cómo funciona?
 
-Un navegador lanzado por Playwright (o una petición con `curl_cffi`) es detectado por
+Una petición HTTP normal o un navegador lanzado por Playwright es detectado por
 Cloudflare y el challenge nunca se resuelve. La estrategia del script es la contraria:
 lanzar un Chrome **real** como proceso independiente y conectarse a él por CDP.
 
@@ -32,11 +33,19 @@ lanzar un Chrome **real** como proceso independiente y conectarse a él por CDP.
    omiten los archivos que ya existen y se descartan respuestas HTML o de menos de
    50 bytes (síntoma de challenge sin resolver).
 
+La interfaz gráfica ejecuta exactamente este flujo en un hilo aparte: la ventana
+sigue respondiendo, muestra el progreso y el registro, y permite detener la
+descarga de forma ordenada.
+
 ## Requisitos
 
-- Python 3.9 o superior (probado con 3.11).
+- Python 3.9 o superior (probado con 3.11, 3.12 y 3.13). Usa una instalación
+  **estándar** de <https://www.python.org/>. El Python de Microsoft Store se ejecuta
+  a integridad baja y Chrome no puede arrancar desde él.
 - Chrome, Chromium, Brave o Edge instalado en el sistema. **No** hace falta ejecutar
   `playwright install`: el script usa el navegador del sistema vía CDP.
+- La interfaz gráfica usa Tkinter, incluido en las instalaciones oficiales de
+  Python. En Linux puede requerir el paquete del sistema `python3-tk`.
 
 ## Instalación
 
@@ -111,6 +120,9 @@ python downtorrent.py URL --executable "/Applications/Chromium.app/Contents/MacO
 
 # En Windows (cmd), con la ruta entre comillas si tiene espacios
 python downtorrent.py URL --executable "C:\Program Files\Google\Chrome\Application\chrome.exe"
+
+# Interfaz gráfica
+python downtorrent.py --gui
 ```
 
 ### Opciones
@@ -118,6 +130,7 @@ python downtorrent.py URL --executable "C:\Program Files\Google\Chrome\Applicati
 | Opción | Descripción | Por defecto |
 | --- | --- | --- |
 | `urls` | Una o varias URLs de páginas de las que extraer los `.torrent`. | — |
+| `--gui` | Abre la interfaz gráfica en lugar de descargar desde la consola. | desactivado |
 | `-o`, `--salida` | Carpeta donde se guardan los archivos descargados. | `torrents` |
 | `--headless` | Ejecuta Chrome sin ventana. Menos fiable contra Cloudflare. | desactivado |
 | `--executable` | Ruta al binario de Chrome/Chromium si no se detecta automáticamente. | autodetección |
@@ -126,6 +139,65 @@ python downtorrent.py URL --executable "C:\Program Files\Google\Chrome\Applicati
 
 La lista de rutas de navegador que se prueban está en `RUTAS_NAVEGADOR`; si tu
 navegador no aparece ahí, usa `--executable`.
+
+## Interfaz gráfica
+
+La aplicación de escritorio usa Tkinter y el mismo núcleo que el script. No añade
+dependencias de Python: Tkinter viene incluido en la instalación oficial (en Linux,
+consulta los requisitos del paquete `python3-tk`).
+
+![Interfaz gráfica de downTorrent](docs/captura-gui.png)
+
+### Cómo abrirla
+
+- **Windows:** doble clic en `iniciar_gui.bat`.
+- **macOS / Linux:** `python3 downtorrent_gui.py` o `sh iniciar_gui.sh`.
+- **Desde el script principal:** `python downtorrent.py --gui`.
+
+> **Importante:** ábrela con doble clic desde el Explorador (o con `Win+R`),
+> **no desde la terminal del agente**. Esa terminal puede ejecutarse en un
+> sandbox que impide a Chrome arrancar; la aplicación lo detecta y muestra un
+> aviso claro en el registro.
+
+Con el entorno virtual activado también puedes ejecutar `python downtorrent_gui.py`
+directamente.
+
+### Qué permite hacer
+
+- Pegar una o varias URLs (una por línea) y descargarlas con un botón.
+- Elegir la carpeta de destino y abrirla con el explorador de archivos.
+- Ajustar el tiempo de espera del challenge, ejecutar Chrome sin ventana o indicar
+  un navegador concreto (si se deja vacío, se detecta automáticamente).
+- Enviar cada `.torrent` a qBittorrent en cuanto se descarga correctamente.
+- Ver el progreso y el registro detallado en tiempo real.
+- Detener la descarga sin cerrar la ventana: se termina la operación en curso y se
+  cierra Chrome de forma ordenada.
+- Recordar la carpeta, el navegador, el tiempo de espera y el tamaño de la ventana
+  entre ejecuciones.
+
+Atajos: `Ctrl+Intro` o `F5` inician la descarga.
+
+### Enviar a qBittorrent
+
+La interfaz puede entregar cada `.torrent` a qBittorrent en cuanto se descarga
+correctamente, para que empiece a bajarlo:
+
+1. En qBittorrent, activa **Herramientas → Opciones → Web UI** y comprueba el
+   puerto (por defecto `8080`) y el usuario/contraseña.
+2. En downTorrent, marca **Enviar cada .torrent a qBittorrent al descargarlo**.
+3. Rellena la dirección (`http://127.0.0.1:8080`), el usuario y la contraseña, y
+   pulsa **Probar**. Si qBittorrent no está abierto, usa **Abrir qBittorrent**.
+   Si no recuerdas la contraseña, puedes establecer una nueva en esa misma
+   pantalla de qBittorrent.
+4. Opcionalmente indica una categoría o marca **Añadir en pausa**.
+
+Cada archivo descargado se envía inmediatamente. Si el envío falla, el `.torrent`
+se conserva en la carpeta de destino y el registro muestra el error; la descarga
+de los demás continúa.
+
+Las preferencias se guardan en `~/.downtorrent/gui.json`
+(`C:\Users\<usuario>\.downtorrent\gui.json` en Windows). Es un archivo pequeño de
+configuración; no contiene cookies ni datos de sesión.
 
 ## Salida
 
@@ -137,8 +209,17 @@ cero se omiten, así que se puede relanzar el script sin volver a descargarlo to
 
 ```
 .
-├── downtorrent.py      # script principal
-├── requirements.txt    # dependencias
+├── downtorrent.py       # núcleo y línea de comandos
+├── downtorrent_gui.py   # interfaz gráfica (Tkinter)
+├── qbittorrent.py       # cliente de la API Web de qBittorrent
+├── iniciar_gui.bat      # lanzador para Windows
+├── iniciar_gui.sh       # lanzador para macOS/Linux
+├── assets/
+│   ├── icono.png        # icono de la ventana
+│   └── icono.ico        # icono del acceso directo
+├── docs/
+│   └── captura-gui.png  # captura para este README
+├── requirements.txt     # dependencias
 ├── README.md
 ├── LICENSE
 └── .gitignore
@@ -151,6 +232,13 @@ El perfil de Chrome se guarda **fuera** del repositorio, en
 en Windows), y contiene cookies de sesión. No lo copies al proyecto ni lo subas a
 ningún sitio.
 
+La interfaz gráfica guarda sus preferencias en `~/.downtorrent/gui.json`: carpeta
+de destino, ruta del navegador, tiempo de espera, tamaño de la ventana y la
+dirección/credenciales de la Web UI de qBittorrent. La contraseña de qBittorrent
+se guarda sin cifrar en ese archivo local; si no quieres guardarla, activa
+«Bypass authentication for clients on localhost» en qBittorrent y deja la
+contraseña vacía.
+
 ## Problemas frecuentes
 
 | Síntoma | Causa probable / solución |
@@ -158,10 +246,19 @@ ningún sitio.
 | `El challenge de Cloudflare no se resolvió en Ns` | VPN o IP de datacenter, o `--headless`. Desactiva la VPN, prueba con ventana normal y sube `--timeout`. |
 | `No se encontró Chrome/Chromium` | Ninguna ruta conocida coincide: indica el binario con `--executable`. |
 | `Chrome no respondió en el puerto de depuración` | Quedó una instancia abierta con el mismo perfil; ciérrala y reintenta. En macOS/Linux: `pkill -f remote-debugging-port`; en Windows: cierra la ventana de Chrome que abrió el script, o usa el Administrador de tareas. |
+| `La aplicación se está ejecutando desde la terminal del agente (DSH)` | Esa terminal está en un sandbox que impide lanzar Chrome. Cierra la aplicación y ábrela con doble clic en `iniciar_gui.bat` desde el Explorador (o con `Win+R`). |
+| `No se puede escribir en el perfil de Chrome` | Revisa los permisos de `~/.downtorrent`; la carpeta debe ser escribible por tu usuario. Si la abriste desde una terminal del agente, usa el Explorador. |
+| Chrome no arranca y el perfil da error de permisos | Estás usando el **Python de Microsoft Store**, que se ejecuta a integridad baja. Instala Python estándar desde <https://www.python.org/> (o `winget install -e --id Python.Python.3.12`) y recrea el `venv`. |
+| `qBittorrent rechazó el usuario o la contraseña` | Revisa las credenciales en **Herramientas → Opciones → Web UI** o activa el bypass de autenticación para localhost. |
+| `No se pudo conectar con qBittorrent` | Abre qBittorrent, comprueba que la Web UI está activada y que la dirección/puerto coinciden (por defecto `http://127.0.0.1:8080`). |
+| Necesitas ver el error real de Chrome | La aplicación guarda su salida en `~/.downtorrent/chrome-profile/downTorrent-chrome.log` y muestra las últimas líneas cuando no arranca. |
 | `La respuesta parece HTML` | El challenge no estaba resuelto al descargar; reintenta subiendo `--timeout`. |
 | No aparecen enlaces | La página cambió de estructura o no era una página de listado. |
 | `UnicodeEncodeError` al imprimir | Solo ocurre en versiones antiguas; el script ya reconfigura la salida en UTF-8. Si persiste, ejecuta `set PYTHONIOENCODING=utf-8` antes (Windows). |
 | En Windows no arranca el navegador | Indica la ruta completa entre comillas: `--executable "C:\Program Files\Google\Chrome\Application\chrome.exe"`. |
+| La ventana no se abre con `iniciar_gui.bat` | Comprueba que existe `venv\Scripts\pythonw.exe` y que instalaste las dependencias. Para ver el error, abre una consola y ejecuta `python downtorrent_gui.py`. |
+| `No module named 'tkinter'` | En Linux instala `sudo apt install python3-tk` (o el paquete equivalente de tu distribución); en Windows, reinstala Python con el componente Tcl/Tk. |
+| La GUI muestra errores en el registro | Son los mismos avisos que en la línea de comandos. Revisa el registro y, si aparece el challenge, desmarca «Chrome sin ventana» y sube «Espera del challenge». |
 
 ### Rutas de navegador habituales en Windows
 
